@@ -1,0 +1,30 @@
+trigger:
+  - main
+
+pool:
+  name: Self-hosted
+
+steps:
+  - task: UseDotNet@2
+    inputs:
+      packageType: sdk
+      version: 8.x
+
+  - script: dotnet build
+    displayName: 'Build Solution'
+
+  - script: dotnet pack -o $(Build.ArtifactStagingDirectory)
+    displayName: 'Pack NuGet'
+
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathToPublish: $(Build.ArtifactStagingDirectory)
+
+
+  - task: NuGetCommand@2
+    inputs:
+      command: push
+      packagesToPush: $(Build.ArtifactStagingDirectory)/*.nupkg
+      publishVstsFeed: tharari
+    env:
+      VSS_NUGET_EXTERNAL_FEED_ENDPOINTS: '{"endpointCredential":[{"endpoint":"https://pkgs.dev.azure.com/tharari/_packaging/tharari/nuget/v3/index.json","username":"HELIPAD$","password":"$(System.AccessToken)"}]}'
